@@ -1,0 +1,44 @@
+#!/bin/bash
+# Usage: rbenv charles-ssl [<version>, [[version], ...]]
+set -eu
+
+TMP="${TMPDIR:-/tmp}"
+pem="$(mktemp "${TMP%/}/charles-ssl.XXXXXX")"
+trap "rm '$pem'" EXIT
+
+if ! security find-certificate -pc "Charles Proxy SSL Proxying" 2>/dev/null > "$pem"; then
+  echo "Error: couldn't find Charles SSL certificate in OS X Keychain" >&2
+  exit 1
+fi
+
+if [ $# -gt 0 ]; then
+  versions=( "$@" )
+  exec >/dev/null
+else
+  OLDIFS="$IFS"
+  IFS=$'\n'
+  versions=( `rbenv versions --bare` )
+  IFS="$OLDIFS"
+fi
+
+for ver in "${versions[@]}"; do
+  printf "%s\t" "$ver"
+  if ! RBENV_VERSION=$ver ruby -ropenssl -e 'puts OpenSSL::X509::DEFAULT_CERT_DIR' 2>/dev/null; then
+    echo "Warning: version $ver doesn't seem compiled with SSL support" >&2
+  fi
+done | sort -u | {
+  while read ver ssl_dir; do
+    if [ -w "$ssl_dir" ]; then
+      printf "%s: " "$ver"
+      local_pem="${ssl_dir}/charles-ssl-proxying-certificate.pem"
+      if [ ! -e "$local_pem" ]; then
+        ln "$pem" "$local_pem"
+        openssl_dir="${ssl_dir%/*}"
+        openssl_dir="${openssl_dir%/*}"
+        "${openssl_dir}"/bin/c_rehash
+      else
+        echo "✔︎"
+      fi
+    fi
+  done
+}
