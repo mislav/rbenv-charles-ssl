@@ -21,6 +21,8 @@ else
   IFS="$OLDIFS"
 fi
 
+brew_prefix="$(brew --prefix 2>/dev/null || true)"
+
 for ver in "${versions[@]}"; do
   printf "%s\t" "$ver"
   if ! RBENV_VERSION=$ver ruby -ropenssl -e 'puts OpenSSL::X509::DEFAULT_CERT_DIR' 2>/dev/null; then
@@ -33,8 +35,12 @@ done | sort -u | {
       local_pem="${ssl_dir}/charles-ssl-proxying-certificate.pem"
       if [ ! -e "$local_pem" ] || [ "$(md5 -q "$local_pem")" != "$(md5 -q "$pem")" ]; then
         ln -f "$pem" "$local_pem"
-        openssl_dir="${ssl_dir%/*}"
-        openssl_dir="${openssl_dir%/*}"
+        if [ -n "$brew_prefix" ] && [[ "$ssl_dir" == "$brew_prefix"/* ]]; then
+          openssl_dir="${brew_prefix}/opt/openssl"
+        else
+          openssl_dir="${ssl_dir%/*}"
+          openssl_dir="${openssl_dir%/*}"
+        fi
         "${openssl_dir}"/bin/c_rehash
       else
         echo "✔︎"
