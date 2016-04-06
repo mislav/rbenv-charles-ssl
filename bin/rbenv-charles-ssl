@@ -46,6 +46,8 @@ done | sort -u | {
       else
         echo "✔︎"
       fi
+    else
+      echo "warning: $ssl_dir is not writeable" >&2
     fi
   done
 }
