@@ -30,6 +30,7 @@ for ver in "${versions[@]}"; do
   fi
 done | sort -u | {
   while read ver ssl_dir; do
+    [ -e "$ssl_dir" ] || mkdir -p "$ssl_dir"
     if [ -w "$ssl_dir" ]; then
       printf "%s: " "$ver"
       local_pem="${ssl_dir}/charles-ssl-proxying-certificate.pem"
