@@ -17,7 +17,7 @@ if [ $# -gt 0 ]; then
 else
   OLDIFS="$IFS"
   IFS=$'\n'
-  versions=( `rbenv versions --bare` )
+  versions=( `rbenv versions --bare --skip-aliases` )
   IFS="$OLDIFS"
 fi
 
