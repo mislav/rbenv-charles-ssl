@@ -6,7 +6,7 @@ TMP="${TMPDIR:-/tmp}"
 pem="$(mktemp "${TMP%/}/charles-ssl.XXXXXX")"
 trap "rm '$pem'" EXIT
 
-if ! security find-certificate -pc "Charles Proxy Custom Root Certificate" 2>/dev/null > "$pem"; then
+if ! security find-certificate -pc "Charles Proxy CA" 2>/dev/null > "$pem"; then
   echo "Error: couldn't find Charles SSL certificate in OS X Keychain" >&2
   exit 1
 fi
